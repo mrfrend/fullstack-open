@@ -1,9 +1,11 @@
 const express = require('express')
 const morgan = require('morgan')
 const app = express()
-
+const cors = require('cors')
 morgan.token('body', (req, res) => { return JSON.stringify(req.body) })
 
+app.use(express.static('dist'))
+app.use(cors())
 app.use(express.json())
 app.use(morgan('tiny', {
 	skip: (req, res) => req.method === 'POST'
@@ -16,7 +18,7 @@ const generateId = () => {
 	return String(Math.floor(Math.random() * 100_000_000))
 }
 
-const PORT = 3001;
+const PORT = process.env.PORT || 3001;
 
 let persons = [
 	{
