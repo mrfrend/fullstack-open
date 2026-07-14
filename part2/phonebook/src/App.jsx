@@ -5,6 +5,7 @@ import { Persons } from "./components/Persons";
 import personService from "./services/persons";
 import Notification from "./components/Notification";
 
+
 const App = () => {
 	const [persons, setPersons] = useState([]);
 	const [newName, setNewName] = useState("");
@@ -21,9 +22,19 @@ const App = () => {
 
 	const personsToShow = filterValue
 		? persons.filter((person) =>
-				person.name.toLowerCase().includes(filterValue.toLowerCase()),
-			)
+			person.name.toLowerCase().includes(filterValue.toLowerCase()),
+		)
 		: persons;
+
+	const errorHandler = (err) => {
+		setNotification(
+			err.response.data.error,
+		);
+		setIsError(true);
+		setTimeout(() => {
+			(setNotification(null), setIsError(false));
+		}, 3000);
+	};
 
 	const handleAddPerson = (event) => {
 		event.preventDefault();
@@ -37,17 +48,6 @@ const App = () => {
 			setTimeout(() => setNotification(null), 3000);
 		};
 
-		const errorHandler = (person) => {
-			return () => {
-				setNotification(
-					`Information of ${person.name} has already been removed from server`,
-				);
-				setIsError(true);
-				setTimeout(() => {
-					(setNotification(null), setIsError(false));
-				}, 3000);
-			};
-		};
 
 		const updatedHandler = (updatedPerson) => {
 			setPersons(
@@ -72,7 +72,7 @@ const App = () => {
 				personService
 					.update(changedPerson.id, changedPerson)
 					.then(updatedHandler)
-					.catch(errorHandler(person));
+					.catch(errorHandler);
 			}
 		} else {
 			const newPerson = {
@@ -81,7 +81,7 @@ const App = () => {
 				id: persons.length + 1,
 			};
 
-			personService.create(newPerson).then(createdHandler);
+			personService.create(newPerson).then(createdHandler).catch(errorHandler);
 		}
 	};
 
@@ -101,7 +101,7 @@ const App = () => {
 		if (isConfirmed) {
 			personService.deletePerson(deleteId).then(() => {
 				setPersons(persons.filter((person) => person.id != deleteId));
-			});
+			}).catch(errorHandler);
 			setNotification(`Deleted person ${person.name}`);
 			setTimeout(() => setNotification(null), 3000);
 		}

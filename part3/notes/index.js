@@ -1,7 +1,9 @@
+require('dotenv').config()
 const express = require("express");
 const app = express();
 
 const cors = require('cors')
+const Note = require('./models/note')
 
 const generateId = () => {
 	const maxId = notes.length > 0
@@ -36,7 +38,9 @@ app.get("/", (req, res) => {
 });
 
 app.get("/api/notes", (req, res) => {
-	res.json(notes);
+	Note.find({}).then(notes => {
+		res.json(notes)
+	})
 });
 
 app.get("/api/notes/:id", (req, res) => {
