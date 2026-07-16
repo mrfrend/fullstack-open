@@ -3,7 +3,7 @@ const logger = require("./utils/logger");
 const config = require("./utils/config");
 
 app.listen(config.PORT, () => {
-  logger.log(`Server running on port ${PORT}`);
+  logger.info(`Server running on port ${config.PORT}`);
 });
 
 module.exports = app;
