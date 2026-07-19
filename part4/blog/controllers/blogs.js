@@ -18,8 +18,13 @@ blogsRouter.post("/", async (request, response) => {
 
   blog.user = randomUser._id;
 
-  const result = await blog.save();
-  response.status(201).json(result);
+  const savedBlog = await blog.save();
+
+  randomUser.blogs = randomUser.blogs.concat(savedBlog._id);
+
+  await randomUser.save();
+
+  response.status(201).json(savedBlog);
 });
 
 blogsRouter.put("/:id", async (request, response) => {

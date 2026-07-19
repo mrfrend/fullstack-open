@@ -84,7 +84,7 @@ describe("when there is initially some blogs saved", () => {
       assert(createdBlog.likes === 0);
     });
 
-    test("assigns a random user as blog's author", async () => {
+    test.only("assigns a random user as blog's author and adds new blog to his works", async () => {
       const blog = {
         title: "Dummy post",
         author: "post post",
@@ -105,6 +105,12 @@ describe("when there is initially some blogs saved", () => {
       const users = await user_helper.usersInDb();
       const usersId = users.map((user) => user.id);
       assert(usersId.includes(createdBlog.user));
+
+      const assignedUser = users.find((user) => user.id === createdBlog.user);
+      const assignedUserBlogs = assignedUser.blogs.map((blogId) =>
+        blogId.toString(),
+      );
+      assert(assignedUserBlogs.includes(createdBlog.id));
     });
 
     test("returns 400 if url property is missing", async () => {
