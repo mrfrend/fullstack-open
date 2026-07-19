@@ -1,28 +1,35 @@
 const blogsRouter = require("express").Router();
+const jwt = require("jsonwebtoken");
 const Blog = require("../models/blog");
 const User = require("../models/user");
+const { tokenExtractor } = require("../utils/middleware");
+const config = require("../utils/config");
 
 blogsRouter.get("/", async (request, response) => {
   const blogs = await Blog.find({}).populate("user", { username: 1, name: 1 });
   response.json(blogs);
 });
 
-blogsRouter.post("/", async (request, response) => {
+blogsRouter.post("/", tokenExtractor, async (request, response) => {
+  const decodedToken = jwt.verify(request.token, config.SECRET);
+
+  const user = await User.findById(decodedToken.id);
+
+  if (!user) {
+    return response.status(400).json({ error: "UserId missing or invalid" });
+  }
+
   const blog = new Blog({
     ...request.body,
     likes: request.body.likes || 0,
+    user: user._id,
   });
-  const users = await User.find({});
-  const idx = Math.floor(Math.random() * (users.length - 1));
-  const randomUser = users[idx];
-
-  blog.user = randomUser._id;
 
   const savedBlog = await blog.save();
 
-  randomUser.blogs = randomUser.blogs.concat(savedBlog._id);
+  user.blogs = User.blogs.concat(savedBlog._id);
 
-  await randomUser.save();
+  await user.save();
 
   response.status(201).json(savedBlog);
 });
