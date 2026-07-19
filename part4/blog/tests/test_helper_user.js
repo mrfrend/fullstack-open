@@ -14,8 +14,8 @@ const initialData = [
   },
 ];
 
-const getUserwithHash = async (user) => {
-  const passwordHash = await bcrypt.hash(user.password, config.SALT_ROUNDS);
+const getUserwithHash = (user) => {
+  const passwordHash = bcrypt.hashSync(user.password, config.SALT_ROUNDS);
   return {
     username: user.username,
     passwordHash,
@@ -23,13 +23,17 @@ const getUserwithHash = async (user) => {
   };
 };
 
-const initialDb = await Promise.all(
-  initialData.map((user) => getUserwithHash(user)),
-);
+const getRandomUser = async () => {
+  const users = await usersInDb();
+  const idx = Math.floor(Math.random() * (users.length - 1));
+  return users[idx];
+};
+
+const initialDb = initialData.map((user) => getUserwithHash(user));
 
 const usersInDb = async () => {
   const users = await User.find({});
   return users.map((user) => user.toJSON());
 };
 
-module.exports = { initialDb, usersInDb };
+module.exports = { initialDb, usersInDb, getRandomUser };
