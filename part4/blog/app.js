@@ -6,6 +6,7 @@ const {
   errorHandler,
   requestLogger,
   unknownEndpoint,
+  tokenExtractor,
 } = require("./utils/middleware");
 const blogsRouter = require("./controllers/blogs");
 const usersRouter = require("./controllers/users");
@@ -26,7 +27,7 @@ mongoose
 
 app.use(express.json());
 app.use(requestLogger);
-
+app.use(tokenExtractor);
 app.use("/api/blogs", blogsRouter);
 app.use("/api/users", usersRouter);
 app.use("/api/login", loginRouter);

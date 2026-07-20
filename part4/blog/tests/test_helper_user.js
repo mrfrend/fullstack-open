@@ -36,4 +36,4 @@ const usersInDb = async () => {
   return users.map((user) => user.toJSON());
 };
 
-module.exports = { initialDb, usersInDb, getRandomUser };
+module.exports = { initialDb, usersInDb, getRandomUser, initialData };

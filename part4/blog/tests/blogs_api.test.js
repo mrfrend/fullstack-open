@@ -1,5 +1,5 @@
 const app = require("../app");
-const { test, after, beforeEach, describe } = require("node:test");
+const { test, after, beforeEach, describe, before } = require("node:test");
 const assert = require("node:assert");
 const supertest = require("supertest");
 const Blog = require("../models/blog");
@@ -11,6 +11,17 @@ const User = require("../models/user");
 const api = supertest(app);
 
 describe("when there is initially some blogs saved", () => {
+  let tokenString = null;
+  const getTokenString = async () => {
+    await User.deleteMany({});
+    await User.insertMany(user_helper.initialDb);
+
+    const userInfo = user_helper.initialData[0];
+    let tokenResponse = await api
+      .post("/api/login")
+      .send({ username: userInfo.username, password: userInfo.password });
+    tokenString = "Bearer " + tokenResponse.body.token;
+  };
   beforeEach(async () => {
     await Blog.deleteMany({});
     await Blog.insertMany(blog_helper.initialDb);
@@ -39,10 +50,7 @@ describe("when there is initially some blogs saved", () => {
   });
 
   describe("creating a new blog", () => {
-    beforeEach(async () => {
-      await User.deleteMany({});
-      await User.insertMany(user_helper.initialDb);
-    });
+    before(getTokenString);
     test("succeeds with correct data", async () => {
       const blog = {
         title: "Dummy post",
@@ -50,9 +58,9 @@ describe("when there is initially some blogs saved", () => {
         url: "dummy-post",
         likes: 7,
       };
-
       await api
         .post("/api/blogs")
+        .set("Authorization", tokenString)
         .send(blog)
         .expect(201)
         .expect("Content-Type", /application\/json/);
@@ -72,8 +80,11 @@ describe("when there is initially some blogs saved", () => {
         author: "post post",
         url: "dummy-post",
       };
-
-      await api.post("/api/blogs").send(blog).expect(201);
+      await api
+        .post("/api/blogs")
+        .set("Authorization", tokenString)
+        .send(blog)
+        .expect(201);
 
       const response = await api.get("/api/blogs").expect(200);
       assert.strictEqual(
@@ -84,7 +95,7 @@ describe("when there is initially some blogs saved", () => {
       assert(createdBlog.likes === 0);
     });
 
-    test.only("assigns a random user as blog's author and adds new blog to his works", async () => {
+    test("assigns the authorized user as blog's author and adds new blog to his works", async () => {
       const blog = {
         title: "Dummy post",
         author: "post post",
@@ -94,6 +105,7 @@ describe("when there is initially some blogs saved", () => {
 
       const response = await api
         .post("/api/blogs")
+        .set("Authorization", tokenString)
         .send(blog)
         .expect(201)
         .expect("Content-Type", /application\/json/);
@@ -119,7 +131,11 @@ describe("when there is initially some blogs saved", () => {
         author: "post post",
         likes: 7,
       };
-      await api.post("/api/blogs").send(blog).expect(400);
+      await api
+        .post("/api/blogs")
+        .set("Authorization", tokenString)
+        .send(blog)
+        .expect(400);
     });
 
     test("returns 400 if title property is missing", async () => {
@@ -128,7 +144,11 @@ describe("when there is initially some blogs saved", () => {
         url: "dummy-post",
         likes: 7,
       };
-      await api.post("/api/blogs").send(blog).expect(400);
+      await api
+        .post("/api/blogs")
+        .set("Authorization", tokenString)
+        .send(blog)
+        .expect(400);
     });
 
     test("returns 400 if url and title properties are missing", async () => {
@@ -136,15 +156,38 @@ describe("when there is initially some blogs saved", () => {
         author: "post post",
         likes: 7,
       };
-      await api.post("/api/blogs").send(blog).expect(400);
+      await api
+        .post("/api/blogs")
+        .set("Authorization", tokenString)
+        .send(blog)
+        .expect(400);
     });
   });
 
-  describe("deleting the blog)", () => {
+  describe.only("deleting the blog)", () => {
+    let createdBlogId = null;
+    before(getTokenString);
+    beforeEach(async () => {
+      const blog = {
+        title: "Dummy post",
+        author: "post post",
+        url: "dummy-post",
+        likes: 7,
+      };
+      const response = await api
+        .post("/api/blogs")
+        .set("Authorization", tokenString)
+        .send(blog);
+      const blogToBeDeleted = response.body;
+      createdBlogId = blogToBeDeleted.id;
+    });
     test("succeeds and returns 204 if the blog is found", async () => {
       const blogsBefore = await blog_helper.blogsInDb();
-      const blogId = blogsBefore[1].id;
-      await api.delete(`/api/blogs/${blogId}`).expect(204);
+      const blogId = createdBlogId;
+      await api
+        .delete(`/api/blogs/${blogId}`)
+        .set("Authorization", tokenString)
+        .expect(204);
       const blogsAfter = await blog_helper.blogsInDb();
       const blogIds = blogsAfter.map((blog) => blog.id);
       assert.strictEqual(blogsBefore.length - 1, blogsAfter.length);
@@ -152,11 +195,17 @@ describe("when there is initially some blogs saved", () => {
     });
     test("returns 204 even if there is no blog with the corresponding id", async () => {
       const noExistId = await blog_helper.nonExistingId();
-      await api.delete(`/api/blogs/${noExistId}`).expect(204);
+      await api
+        .delete(`/api/blogs/${noExistId}`)
+        .set("Authorization", tokenString)
+        .expect(204);
     });
 
     test("returns 400 if id is malformatted", async () => {
-      await api.delete("/api/blogs/random-bullshit").expect(400);
+      await api
+        .delete("/api/blogs/random-bullshit")
+        .set("Authorization", tokenString)
+        .expect(400);
     });
   });
 

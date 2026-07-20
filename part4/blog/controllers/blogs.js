@@ -2,7 +2,7 @@ const blogsRouter = require("express").Router();
 const jwt = require("jsonwebtoken");
 const Blog = require("../models/blog");
 const User = require("../models/user");
-const { tokenExtractor } = require("../utils/middleware");
+const { userExtractor } = require("../utils/middleware");
 const config = require("../utils/config");
 
 blogsRouter.get("/", async (request, response) => {
@@ -10,14 +10,8 @@ blogsRouter.get("/", async (request, response) => {
   response.json(blogs);
 });
 
-blogsRouter.post("/", tokenExtractor, async (request, response) => {
-  const decodedToken = jwt.verify(request.token, config.SECRET);
-
-  const user = await User.findById(decodedToken.id);
-
-  if (!user) {
-    return response.status(400).json({ error: "UserId missing or invalid" });
-  }
+blogsRouter.post("/", userExtractor, async (request, response) => {
+  const user = request.user;
 
   const blog = new Blog({
     ...request.body,
@@ -27,7 +21,7 @@ blogsRouter.post("/", tokenExtractor, async (request, response) => {
 
   const savedBlog = await blog.save();
 
-  user.blogs = User.blogs.concat(savedBlog._id);
+  user.blogs = user.blogs.concat(savedBlog._id);
 
   await user.save();
 
@@ -51,9 +45,21 @@ blogsRouter.put("/:id", async (request, response) => {
   response.json(updatedBlog);
 });
 
-blogsRouter.delete("/:id", async (request, response) => {
+blogsRouter.delete("/:id", userExtractor, async (request, response) => {
   const id = request.params.id;
-  await Blog.findByIdAndDelete(id);
+  const user = request.user;
+  const blog = await Blog.findById(id);
+
+  if (!blog) {
+    return response.status(204).end();
+  }
+
+  if (blog.user.toString() !== user._id.toString()) {
+    return response
+      .status(403)
+      .json({ error: "UserId not the same for blog's user" });
+  }
+  await blog.deleteOne();
   response.status(204).end();
 });
 
