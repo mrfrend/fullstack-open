@@ -1,0 +1,10 @@
+POST http://localhost:3001/api/blogs
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6IkR1bW15IDEiLCJpZCI6IjZhNWNjMTA1OTQ0ZGNmYjgyMGQ5NDMwOSIsImlhdCI6MTc4NDQ3MTYzMywiZXhwIjoxNzg0NDc1MjMzfQ.08oQ1DHCk8r-EcKOA6DeuMIr-ZCU-1YCo7h9rpAFQ1c
+
+{
+	"title": "Random blog",
+	"author": "Ivan Deshchenko",
+	"url": "random-blog",
+	"likes": 4
+}
