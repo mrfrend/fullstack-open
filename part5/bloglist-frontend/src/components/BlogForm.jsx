@@ -1,12 +1,29 @@
-const BlogForm = ({ onSubmit, form }) => {
+import { useState } from 'react'
+const BlogForm = ({ onSubmit }) => {
+  const [title, setTitle] = useState('')
+  const [author, setAuthor] = useState('')
+  const [url, setUrl] = useState('')
+
+  const createBlog = event => {
+    event.preventDefault()
+    onSubmit({
+      title,
+      author,
+      url
+    })
+    setTitle('')
+    setAuthor('')
+    setUrl('')
+  }
+
   return (
-    <form onSubmit={onSubmit}>
+    <form onSubmit={createBlog}>
       <div>
         <label>
           title:
           <input
-            value={form.title}
-            onChange={form.onTitleChange}
+            value={title}
+            onChange={({ target }) => setTitle(target.value)}
             name='title'
           />
         </label>
@@ -15,8 +32,8 @@ const BlogForm = ({ onSubmit, form }) => {
         <label>
           author:
           <input
-            value={form.author}
-            onChange={form.onAuthorChange}
+            value={author}
+            onChange={({ target }) => setAuthor(target.value)}
             name='author'
           />
         </label>
@@ -24,7 +41,11 @@ const BlogForm = ({ onSubmit, form }) => {
       <div>
         <label>
           url:
-          <input value={form.url} onChange={form.onUrlChange} name='url' />
+          <input
+            value={url}
+            onChange={({ target }) => setUrl(target.value)}
+            name='url'
+          />
         </label>
       </div>
       <button>create</button>

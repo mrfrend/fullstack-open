@@ -28,7 +28,7 @@ blogsRouter.post("/", userExtractor, async (request, response) => {
   response.status(201).json(savedBlog);
 });
 
-blogsRouter.put("/:id", async (request, response) => {
+blogsRouter.put("/:id", userExtractor, async (request, response) => {
   const id = request.params.id;
   const blog = await Blog.findById(id);
   const body = request.body;
